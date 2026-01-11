@@ -9,206 +9,135 @@ interface Props {
   onNavigateToSupport?: () => void;
 }
 
-const DAILY_LIMIT = 2; 
-const BOT_NAME = "Tuga";
-
 const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked, onNavigateToSupport }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [questionsUsed, setQuestionsUsed] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const AVATAR_URL = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=150&h=150";
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const storedInteractions = localStorage.getItem('portugal_2026_interactions');
-    if (storedInteractions) {
-      setQuestionsUsed(parseInt(storedInteractions));
-    }
-
     setMessages([{ 
       role: 'assistant', 
-      content: `O Tuga está presente. Auditoria local sincronizada. O que pretendes investigar hoje sobre 2026?` 
+      content: `O Tuga está presente. Investigas ou envias o comprovativo de apoio?` 
     }]);
   }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [messages, isLoading]);
 
-  // Fix: Focar o input ao abrir o chat em dispositivos maiores
-  useEffect(() => {
-    if (isOpen && window.innerWidth > 640) {
-      setTimeout(() => inputRef.current?.focus(), 300);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setSelectedImage(reader.result as string);
+      reader.readAsDataURL(file);
     }
-  }, [isOpen]);
+  };
 
   const handleSend = async () => {
-    const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading) return;
+    if ((!input.trim() && !selectedImage) || isLoading) return;
     
-    if (!isPremium && questionsUsed >= DAILY_LIMIT) {
-      setIsOpen(false);
-      onNavigateToSupport?.();
-      return;
-    }
+    const userMsg: Message = { 
+      role: 'user', 
+      content: input || "Envio de comprovativo para auditoria.",
+      image: selectedImage || undefined 
+    };
 
-    const newUserMessage: Message = { role: 'user', content: trimmedInput };
-    setMessages(prev => [...prev, newUserMessage]);
-    setInput(''); // Limpa o estado local
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setSelectedImage(null);
     setIsLoading(true);
 
     try {
-      const response = await getAssistantResponse([...messages, newUserMessage]);
-      setMessages(prev => [...prev, { role: 'assistant', content: response.text, sources: response.sources }]);
+      const result = await getAssistantResponse([...messages, userMsg]);
       
-      if (!isPremium) {
-        const newCount = questionsUsed + 1;
-        setQuestionsUsed(newCount);
-        localStorage.setItem('portugal_2026_interactions', newCount.toString());
+      if (result.shouldUnlock && !isPremium) {
+        onPremiumUnlocked();
       }
+
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: result.text, 
+        sources: result.sources 
+      }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "O Tuga perdeu o sinal. Verifica o terminal." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Erro na transmissão local." }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isLimitReached = !isPremium && questionsUsed >= DAILY_LIMIT;
-
   return (
     <>
-      {/* Botão Flutuante */}
       <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-[1000] pointer-events-none">
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="pointer-events-auto relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl group"
+          className="pointer-events-auto w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 group"
         >
-          <div className="absolute inset-0 bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors"></div>
           {isOpen ? (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
           ) : (
-            <div className="relative">
-              <img src={AVATAR_URL} className="w-14 h-14 sm:w-16 sm:h-16 object-cover grayscale brightness-110" alt="Tuga" />
-              {!isPremium && !isLimitReached && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full text-[9px] font-black flex items-center justify-center text-slate-950 border-2 border-slate-900">
-                  {DAILY_LIMIT - questionsUsed}
-                </div>
-              )}
-            </div>
+            <div className="text-emerald-500 font-black text-xl italic">IA</div>
           )}
         </button>
       </div>
 
-      {/* Painel do Chat */}
-      <div 
-        className={`fixed inset-0 sm:inset-auto sm:bottom-28 sm:right-8 w-full sm:w-[420px] md:w-[480px] h-full sm:h-[600px] md:h-[650px] z-[999] transition-all duration-500 ease-out flex flex-col ${
-          isOpen ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-12 opacity-0 pointer-events-none scale-95'
-        }`}
-      >
-        <div className="flex flex-col h-full bg-slate-950 sm:rounded-3xl border border-white/10 shadow-[0_32px_128px_rgba(0,0,0,0.8)] backdrop-blur-3xl overflow-hidden">
+      <div className={`fixed inset-0 sm:inset-auto sm:bottom-28 sm:right-8 w-full sm:w-[450px] h-[100dvh] sm:h-[600px] z-[999] transition-all duration-500 ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0 pointer-events-none'}`}>
+        <div className="flex flex-col h-full bg-slate-950 sm:rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
           
-          <div className="px-6 py-4 sm:px-8 sm:py-6 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg overflow-hidden border border-emerald-500/20">
-                <img src={AVATAR_URL} className="w-full h-full object-cover grayscale" alt="Tuga" />
-              </div>
-              <div>
-                <h3 className="text-white text-base sm:text-lg font-black tracking-tight uppercase leading-none">{BOT_NAME}</h3>
-                <div className="text-[9px] font-bold uppercase text-emerald-400 tracking-widest mt-1 opacity-80">
-                  {isPremium ? 'Núcleo Neural Pro' : 'Protocolo Local'}
-                </div>
-              </div>
-            </div>
-            <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-white transition-colors p-2">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
+          <div className="p-6 border-b border-white/5 bg-slate-900/40 flex justify-between items-center">
+            <span className="text-xs font-black uppercase text-emerald-500 tracking-widest">Tuga v6 • Auditoria Vision</span>
+            {isPremium && <span className="text-[8px] bg-emerald-500 text-slate-950 px-2 py-0.5 rounded font-black">MODO PRO</span>}
           </div>
 
-          <div ref={scrollRef} className="flex-1 p-6 sm:p-8 overflow-y-auto space-y-6 sm:space-y-8 hide-scrollbar bg-gradient-to-b from-transparent to-black/20">
+          <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto space-y-6 hide-scrollbar">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in duration-500`}>
-                <div className={`max-w-[90%] sm:max-w-[85%] p-4 sm:p-6 rounded-2xl text-xs sm:text-sm leading-relaxed font-medium ${
-                  msg.role === 'user' 
-                    ? 'bg-emerald-600 text-slate-950 rounded-tr-none font-bold shadow-lg shadow-emerald-900/10' 
-                    : 'bg-white/5 text-slate-200 rounded-tl-none border border-white/5'
-                }`}>
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-4 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-emerald-600 text-slate-950 font-bold' : 'bg-white/5 text-slate-200 border border-white/5'}`}>
+                  {msg.image && <img src={msg.image} className="w-full rounded-lg mb-3 border border-white/10" />}
                   {msg.content}
-                  {msg.role === 'assistant' && msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                      <p className="text-[10px] font-black uppercase text-emerald-500 tracking-widest mb-2">Fontes Verificadas:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {msg.sources.map((source, idx) => (
-                          <a 
-                            key={idx} 
-                            href={source.uri} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-[10px] bg-white/5 hover:bg-white/10 border border-white/10 rounded px-2 py-1 transition-colors truncate max-w-full"
-                          >
-                            {source.title}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
-            {isLoading && (
-              <div className="flex gap-2 p-4 bg-white/5 rounded-2xl w-24 border border-white/5">
-                {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" style={{animationDelay: `${i*0.2}s`}}></div>)}
-              </div>
-            )}
-            
-            {isLimitReached && (
-              <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center space-y-4 animate-in zoom-in-95">
-                <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Acesso Local Esgotado</p>
-                <button 
-                  onClick={() => {
-                    setIsOpen(false);
-                    onNavigateToSupport?.();
-                  }}
-                  className="w-full py-4 bg-emerald-500 text-slate-950 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-xl"
-                >
-                  Desbloquear Dossiers Ilimitados
+            {isLoading && <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>}
+          </div>
+
+          <div className="p-6 bg-slate-900/40 border-t border-white/5 space-y-4">
+            {selectedImage && (
+              <div className="relative inline-block">
+                <img src={selectedImage} className="w-16 h-16 object-cover rounded-lg border border-emerald-500" />
+                <button onClick={() => setSelectedImage(null)} className="absolute -top-2 -right-2 bg-rose-500 rounded-full p-1 text-white">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
               </div>
             )}
-          </div>
-
-          <div className="p-6 sm:p-8 bg-slate-900/40 border-t border-white/5">
+            
             <div className="flex gap-3">
-              <input
-                ref={inputRef}
-                type="text"
-                autoComplete="off"
-                value={input}
-                disabled={isLimitReached || isLoading}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder={isLimitReached ? "Terminal Bloqueado" : "Fala com o Tuga..."}
-                className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 sm:px-5 sm:py-4 outline-none focus:border-emerald-500/40 transition-all text-sm font-medium placeholder:text-slate-700 disabled:opacity-50"
-              />
               <button 
-                onClick={handleSend}
-                disabled={isLimitReached || isLoading}
-                className="w-12 h-12 sm:w-14 sm:h-14 bg-white text-slate-950 rounded-xl flex items-center justify-center transition-all hover:bg-emerald-500 hover:text-white disabled:opacity-50 active:scale-90"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-12 h-12 shrink-0 bg-white/5 rounded-xl flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors border border-white/5"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
+              
+              <input
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="Falar ou enviar comprovativo..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-emerald-500/50"
+              />
+              <button onClick={handleSend} className="w-12 h-12 bg-white text-slate-950 rounded-xl flex items-center justify-center hover:bg-emerald-500 transition-all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m22 2-7 20-4-9-9-4Z"/></svg>
               </button>
             </div>
           </div>

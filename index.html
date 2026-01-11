@@ -5,28 +5,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PORTUGAL 2026 | Auditoria Eleitoral</title>
+    
+    <!-- Scripts Externos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <!-- Import Map Seguro -->
     <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react-dom": "https://esm.sh/react-dom@^19.2.3",
-    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client"
-  }
-}
-</script>
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+        "react": "https://esm.sh/react@19.2.3",
+        "react/": "https://esm.sh/react@19.2.3/",
+        "react-dom": "https://esm.sh/react-dom@19.2.3",
+        "react-dom/": "https://esm.sh/react-dom@19.2.3/",
+        "react-dom/client": "https://esm.sh/react-dom@19.2.3/client"
+      }
+    }
+    </script>
 </head>
 <body class="bg-[#0a0c10] text-slate-200">
-    <div id="root"></div>
-    <div id="chat-container"></div>
+    <!-- Camadas de Fundo -->
     <div class="bg-gradient-mesh"></div>
     
-    <!-- index.tsx é o entry point automático -->
-    <script type="module" src="index.tsx"></script>
+    <!-- App Root -->
+    <div id="root"></div>
+
+    <!-- Ponto de entrada dinâmico -->
+    <script type="module" src="./index.tsx"></script>
+
+    <!-- Fallback para erros de script -->
+    <noscript>
+        <div style="padding: 20px; text-align: center; color: white;">
+            Protocolo de Segurança: Ative o JavaScript para aceder ao Terminal Tuga.
+        </div>
+    </noscript>
 </body>
 </html>

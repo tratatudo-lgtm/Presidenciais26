@@ -1,27 +1,70 @@
 
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { Message } from "../types";
 import { SYSTEM_PROMPT } from "../constants";
 
-export async function getAssistantResponse(messages: Message[]): Promise<{ text: string; sources?: Message['sources'] }> {
+const unlockPremiumTool: FunctionDeclaration = {
+  name: "unlock_premium",
+  parameters: {
+    type: Type.OBJECT,
+    description: "Desbloqueia as funcionalidades premium do terminal quando um comprovativo de 5€ ou mais é detetado.",
+    properties: {
+      valor_detetado: {
+        type: Type.NUMBER,
+        description: "O valor em euros encontrado no comprovativo."
+      },
+      tipo_comprovativo: {
+        type: Type.STRING,
+        description: "MB WAY, Transferência Bancária, etc."
+      }
+    },
+    required: ["valor_detetado"]
+  }
+};
+
+export async function getAssistantResponse(messages: Message[]): Promise<{ 
+  text: string; 
+  sources?: Message['sources'];
+  shouldUnlock?: boolean;
+}> {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    // Pegamos na última mensagem do utilizador
-    const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.content || "";
+    const lastMsg = messages[messages.length - 1];
 
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const parts: any[] = [{ text: lastMsg.content }];
+    
+    if (lastMsg.image) {
+      parts.push({
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: lastMsg.image.split(',')[1]
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: lastUserMessage,
+      contents: [{ role: 'user', parts }],
       config: {
         systemInstruction: SYSTEM_PROMPT,
-        tools: [{ googleSearch: {} }]
+        tools: [
+          { googleSearch: {} },
+          { functionDeclarations: [unlockPremiumTool] }
+        ]
       },
     });
 
-    const text = response.text || "O Investigador não conseguiu formular uma resposta neste momento.";
+    let shouldUnlock = false;
+    if (response.functionCalls) {
+      const call = response.functionCalls.find(f => f.name === 'unlock_premium');
+      if (call) {
+        const val = (call.args as any).valor_detetado;
+        if (val >= 5) shouldUnlock = true;
+      }
+    }
+
+    const text = response.text || "O Tuga está a processar os dados...";
     
-    // Extração de fontes do grounding
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources = chunks
       .filter(chunk => chunk.web)
@@ -30,12 +73,12 @@ export async function getAssistantResponse(messages: Message[]): Promise<{ text:
         uri: chunk.web.uri
       }));
 
-    return { text, sources };
+    return { text, sources, shouldUnlock };
 
   } catch (error) {
     console.error("Gemini API Error:", error);
     return { 
-      text: "ERRO DE PROTOCOLO: Falha na ligação ao núcleo neural. Verifique a conectividade do terminal." 
+      text: "FALHA NO TERMINAL: O núcleo neural não responde. Tenta novamente." 
     };
   }
 }

@@ -24,5 +24,6 @@ export interface Candidate {
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
+  image?: string; // base64 data
   sources?: { title: string; uri: string }[];
 }

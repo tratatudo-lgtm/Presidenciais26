@@ -15,18 +15,21 @@ export interface ExtendedCandidate extends Candidate {
   };
   perfilCompleto: string;
   tipo: string;
-  sondagem: number; // Intenção de voto em %
+  sondagem: number;
   tendencia: 'up' | 'down' | 'stable';
 }
 
 export const SYSTEM_PROMPT = `
-És o "TUGA", um assistente especializado exclusivamente nas eleições presidenciais portuguesas de 2026.
-DATA DO SISTEMA: Janeiro de 2026.
+És o "TUGA", um assistente de inteligência política focado em Portugal 2026.
 
-REGRAS DE OPERAÇÃO:
-1. IDENTIDADE: Responde como o Tuga, um analista político sénior, direto e patriota, mas rigorosamente imparcial.
-2. ESCOPO: Foca-te apenas em 2026. Candidatos, sondagens, propostas e o futuro de Portugal.
-3. RIGOR: Baseia-te nos dossiers auditados fornecidos no sistema.
+REGRA CRÍTICA DE PAGAMENTO:
+1. Se o utilizador enviar uma imagem (comprovativo), deves analisar se é um talão MB WAY ou transferência bancária.
+2. O valor deve ser igual ou superior a 5.00€ (cinco euros).
+3. Se o comprovativo for válido, deves OBRIGATORIAMENTE chamar a ferramenta 'unlock_premium'.
+4. Após chamar a ferramenta, confirma ao utilizador: "Protocolo Premium validado. Acesso ilimitado concedido."
+5. Se for inferior a 5€, agradece mas informa que o mínimo para o modo Pro são 5€.
+
+Foca-te exclusivamente em política portuguesa 2026. Responde em Português de Portugal.
 `;
 
 export const CANDIDATES: ExtendedCandidate[] = [
@@ -35,159 +38,67 @@ export const CANDIDATES: ExtendedCandidate[] = [
     idade: 43,
     partido: "Chega",
     status: "Candidatura Formalizada",
-    cneStatus: "Listas Admitidas em 2026",
+    cneStatus: "Listas Admitidas",
     ideologia: "Direita Nacional-Populista",
-    foco: "IV República e Segurança",
-    proposta: "Revisão constitucional para sistema presidencialista e endurecimento das penas criminais.",
+    foco: "Segurança",
+    proposta: "Revisão constitucional e sistema presidencialista.",
     formacao: "Doutorado em Direito.",
-    experiencia: "Deputado e Líder do Chega.",
-    casosJudiciais: "Contenciosos civis por difamação.",
-    pontosFortes: ["Mobilização popular", "Domínio mediático"],
+    experiencia: "Deputado.",
+    casosJudiciais: "Contenciosos civis.",
+    pontosFortes: ["Mobilização", "Carisma"],
     stats: { experiencia: 65, popularidade: 22, carisma: 96 },
     fontes: ["https://partidochega.pt"],
     image: "",
-    campanhaDiaria: "Comício em Lisboa com foco no controle de fronteiras.",
-    pontosCriticos: ["Elevada rejeição", "Isolamento partidário"],
-    perfilCompleto: "Ventura tenta consolidar o voto de protesto contra o sistema estabelecido.",
-    tipo: "Deputado e líder partidário",
+    campanhaDiaria: "Comício sobre fronteiras.",
+    pontosCriticos: ["Rejeição alta"],
+    perfilCompleto: "Ventura tenta consolidar o voto de protesto.",
+    tipo: "Líder partidário",
     sondagem: 22.4,
     tendencia: 'up'
-  },
-  {
-    nome: "António Filipe",
-    idade: 63,
-    partido: "CDU (PCP-PEV)",
-    status: "Candidatura Formalizada",
-    cneStatus: "Assinaturas Verificadas pelo TC",
-    ideologia: "Comunismo / Esquerda Unitária",
-    foco: "Constituição e Direitos Laborais",
-    proposta: "Defesa intransigente do serviço público e da soberania nacional.",
-    formacao: "Jurista e Professor Universitário.",
-    experiencia: "Deputado de longa data.",
-    casosJudiciais: "Sem registos.",
-    pontosFortes: ["Rigor institucional", "Coerência ideológica"],
-    stats: { experiencia: 92, popularidade: 8, carisma: 45 },
-    fontes: ["https://www.cne.pt"],
-    image: "",
-    campanhaDiaria: "Encontro com sindicatos da função pública.",
-    pontosCriticos: ["Envelhecimento do eleitorado", "Desgaste da CDU"],
-    perfilCompleto: "O candidato da CDU surge como o guardião dos valores de Abril.",
-    tipo: "Deputado comunista",
-    sondagem: 4.8,
-    tendencia: 'stable'
-  },
-  {
-    nome: "António José Seguro",
-    idade: 63,
-    partido: "PS",
-    status: "Em Validação",
-    cneStatus: "Processo de Recolha Finalizado",
-    ideologia: "Social-Democracia / Ética",
-    foco: "Transparência e Unidade Nacional",
-    proposta: "Reforma do sistema político para maior proximidade com eleitores.",
-    formacao: "Ciência Política.",
-    experiencia: "Ex-Secretário-Geral do PS. Ministro.",
-    casosJudiciais: "Sem registos.",
-    pontosFortes: ["Credibilidade ética", "Capacidade de diálogo"],
-    stats: { experiencia: 88, popularidade: 18, carisma: 55 },
-    fontes: ["https://www.ps.pt"],
-    image: "",
-    campanhaDiaria: "Conferência sobre a integridade nas instituições públicas.",
-    pontosCriticos: ["Afastamento prolongado", "Divisões internas"],
-    perfilCompleto: "Seguro posiciona-se como o candidato da 'decência'.",
-    tipo: "Ex-líder do PS",
-    sondagem: 16.2,
-    tendencia: 'up'
-  },
-  {
-    nome: "Catarina Martins",
-    idade: 52,
-    partido: "Bloco de Esquerda",
-    status: "Candidatura Formalizada",
-    cneStatus: "Lista Admitida",
-    ideologia: "Socialismo Democrático",
-    foco: "Justiça Social e Ecologia",
-    proposta: "Controlo público de setores estratégicos e habitação.",
-    formacao: "Linguística e Artes Performativas.",
-    experiencia: "Ex-Coordenadora do BE.",
-    casosJudiciais: "Sem registos.",
-    pontosFortes: ["Eloquência", "Base militante"],
-    stats: { experiencia: 80, popularidade: 12, carisma: 82 },
-    fontes: ["https://www.bloco.org"],
-    image: "",
-    campanhaDiaria: "Visita a bairros carenciados.",
-    pontosCriticos: ["Polarização", "Desgaste"],
-    perfilCompleto: "Martins tenta unificar a esquerda radical.",
-    tipo: "Ex-coordenadora do BE",
-    sondagem: 6.5,
-    tendencia: 'down'
   },
   {
     nome: "Henrique Gouveia e Melo",
     idade: 66,
     partido: "Independente",
     status: "Candidatura Formalizada",
-    cneStatus: "Lista Validada",
-    ideologia: "Institucionalismo / Ordem",
-    foco: "Eficácia e Segurança",
-    proposta: "Gestão técnica e rigorosa dos recursos públicos.",
-    formacao: "Almirante da Marinha.",
-    experiencia: "CEMA. Gestor da Vacinação.",
-    casosJudiciais: "Nenhum registo.",
-    pontosFortes: ["Favorito nas sondagens", "Aura de competência"],
+    cneStatus: "Validada",
+    ideologia: "Institucionalismo",
+    foco: "Eficácia",
+    proposta: "Gestão técnica dos recursos públicos.",
+    formacao: "Almirante.",
+    experiencia: "CEMA.",
+    casosJudiciais: "Nenhum.",
     stats: { experiencia: 98, popularidade: 35, carisma: 70 },
     fontes: ["https://www.cne.pt"],
     image: "",
-    campanhaDiaria: "Visita operacional a centros de comando.",
-    pontosCriticos: ["Perfil autoritário", "Inexperiência partidária"],
+    campanhaDiaria: "Visita a quartéis.",
+    pontosFortes: ["Competência", "Ordem"],
+    pontosCriticos: ["Autoritarismo"],
     perfilCompleto: "O Almirante capitaliza o desejo de ordem.",
-    tipo: "Almirante e gestor da vacinação COVID-19",
+    tipo: "Militar",
     sondagem: 32.1,
     tendencia: 'up'
-  },
-  {
-    nome: "João Cotrim de Figueiredo",
-    idade: 64,
-    partido: "Iniciativa Liberal",
-    status: "Candidatura Formalizada",
-    cneStatus: "Lista Validada",
-    ideologia: "Liberalismo Clássico",
-    foco: "Crescimento Económico",
-    proposta: "Choque fiscal e privatização.",
-    formacao: "Gestão e Economia.",
-    experiencia: "Eurodeputado. Ex-Presidente da IL.",
-    casosJudiciais: "Nenhum.",
-    pontosFortes: ["Clareza de propostas", "Apoio privado"],
-    stats: { experiencia: 75, popularidade: 10, carisma: 78 },
-    fontes: ["https://www.liberal.pt"],
-    image: "",
-    campanhaDiaria: "Fórum com jovens empreendedores.",
-    pontosCriticos: ["Perceção de elitismo", "Foco restrito"],
-    perfilCompleto: "Cotrim representa o liberalismo puro.",
-    tipo: "Ex-deputado liberal",
-    sondagem: 8.4,
-    tendencia: 'stable'
   },
   {
     nome: "Luís Marques Mendes",
     idade: 68,
     partido: "PSD",
     status: "Candidatura Formalizada",
-    cneStatus: "Lista Ratificada",
+    cneStatus: "Ratificada",
     ideologia: "Centro-Direita",
-    foco: "Estabilidade Institucional",
-    proposta: "Consensos políticos alargados.",
+    foco: "Estabilidade",
+    proposta: "Reformas estruturais consensuais.",
     formacao: "Jurista.",
     experiencia: "Conselheiro de Estado.",
     casosJudiciais: "Sem processos.",
-    pontosFortes: ["Projeção nacional", "Experiência de Estado"],
     stats: { experiencia: 96, popularidade: 25, carisma: 65 },
     fontes: ["https://www.psd.pt"],
     image: "",
-    campanhaDiaria: "Almoço com associações empresariais.",
-    pontosCriticos: ["Conotado com o status quo"],
-    perfilCompleto: "O candidato da estabilidade tradicional.",
-    tipo: "Ex-líder do PSD e comentador",
+    campanhaDiaria: "Reuniões com o setor social.",
+    pontosFortes: ["Experiência", "Consenso"],
+    pontosCriticos: ["Status quo"],
+    perfilCompleto: "Candidato da estabilidade institucional.",
+    tipo: "Comentador/Político",
     sondagem: 24.5,
     tendencia: 'down'
   }
