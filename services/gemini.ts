@@ -1,61 +1,41 @@
 
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Message } from "../types";
 import { SYSTEM_PROMPT } from "../constants";
 
-export async function getAssistantResponse(messages: Message[], isPremium: boolean = false): Promise<{ text: string; sources?: Message['sources'] }> {
-  const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-  const API_KEY = "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";
-
-  // Prepara o conteúdo da última mensagem do utilizador para o campo {{input1}}
-  const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.content || "";
-
-  const payload = {
-    "model": "mistralai/mistral-7b-instruct", 
-    "messages": [
-      { 
-        "role": "system", 
-        "content": SYSTEM_PROMPT 
-      },
-      { 
-        "role": "user", 
-        "content": lastUserMessage 
-      }
-    ]
-  };
-
+export async function getAssistantResponse(messages: Message[]): Promise<{ text: string; sources?: Message['sources'] }> {
   try {
-    const response = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Portugal 2026 Auditoria'
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    // Pegamos na última mensagem do utilizador
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.content || "";
+
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: lastUserMessage,
+      config: {
+        systemInstruction: SYSTEM_PROMPT,
+        tools: [{ googleSearch: {} }]
       },
-      body: JSON.stringify(payload)
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Falha na comunicação com o terminal');
-    }
+    const text = response.text || "O Investigador não conseguiu formular uma resposta neste momento.";
+    
+    // Extração de fontes do grounding
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const sources = chunks
+      .filter(chunk => chunk.web)
+      .map(chunk => ({
+        title: chunk.web.title || "Fonte de Notícias",
+        uri: chunk.web.uri
+      }));
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error('Resposta vazia do Investigador');
-    }
-
-    return { 
-      text: content,
-      sources: [] 
-    };
+    return { text, sources };
 
   } catch (error) {
-    console.error("OpenRouter/Investigador Error:", error);
+    console.error("Gemini API Error:", error);
     return { 
-      text: "ERRO DE PROTOCOLO: O Investigador não conseguiu processar esta auditoria. Verifique a conectividade do terminal ou tente mais tarde." 
+      text: "ERRO DE PROTOCOLO: Falha na ligação ao núcleo neural. Verifique a conectividade do terminal." 
     };
   }
 }

@@ -6,12 +6,13 @@ import { getAssistantResponse } from '../services/gemini';
 interface Props {
   isPremium: boolean;
   onPremiumUnlocked: () => void;
+  onNavigateToSupport?: () => void;
 }
 
-const DAILY_LIMIT = 5; 
+const DAILY_LIMIT = 2; 
 const BOT_NAME = "Investigador";
 
-const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
+const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked, onNavigateToSupport }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -22,24 +23,14 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
   const AVATAR_URL = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=150&h=150";
 
   useEffect(() => {
-    const today = new Date().toLocaleDateString();
-    const storedData = localStorage.getItem('researcher_2026_usage');
-    
-    if (storedData) {
-      const { date, count } = JSON.parse(storedData);
-      if (date === today) {
-        setQuestionsUsed(count);
-      } else {
-        localStorage.setItem('researcher_2026_usage', JSON.stringify({ date: today, count: 0 }));
-        setQuestionsUsed(0);
-      }
-    } else {
-      localStorage.setItem('researcher_2026_usage', JSON.stringify({ date: today, count: 0 }));
+    const storedInteractions = localStorage.getItem('portugal_2026_interactions');
+    if (storedInteractions) {
+      setQuestionsUsed(parseInt(storedInteractions));
     }
 
     setMessages([{ 
       role: 'assistant', 
-      content: `Sistema Ativo. Sou o ${BOT_NAME} do Portugal 2026. Como posso auditar o cenário político para si hoje?` 
+      content: `Terminal Local Ativo. Sou o ${BOT_NAME}. Como posso auditar o cenário político para si hoje?` 
     }]);
   }, []);
 
@@ -51,10 +42,8 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
     if (!input.trim() || isLoading) return;
     
     if (!isPremium && questionsUsed >= DAILY_LIMIT) {
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: `Limite de auditorias diárias atingido para o Investigador. Apoie o projeto para continuar a monitorização em tempo real.` 
-      }]);
+      setIsOpen(false);
+      onNavigateToSupport?.();
       return;
     }
 
@@ -64,17 +53,16 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
     setIsLoading(true);
 
     try {
-      const response = await getAssistantResponse([...messages, { role: 'user', content: text }], isPremium);
+      const response = await getAssistantResponse([...messages, { role: 'user', content: text }]);
       setMessages(prev => [...prev, { role: 'assistant', content: response.text, sources: response.sources }]);
       
       if (!isPremium) {
         const newCount = questionsUsed + 1;
         setQuestionsUsed(newCount);
-        const today = new Date().toLocaleDateString();
-        localStorage.setItem('researcher_2026_usage', JSON.stringify({ date: today, count: newCount }));
+        localStorage.setItem('portugal_2026_interactions', newCount.toString());
       }
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Falha na ligação ao Investigador. Verifique a sua conexão ao terminal." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Falha na ligação ao Investigador. Verifique a sua conexão." }]);
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +83,7 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
           ) : (
             <div className="relative">
               <img src={AVATAR_URL} className="w-16 h-16 object-cover grayscale brightness-110" alt="Investigador" />
-              {!isPremium && questionsUsed < DAILY_LIMIT && (
+              {!isPremium && !isLimitReached && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full text-[9px] font-black flex items-center justify-center text-slate-950 border-2 border-slate-900">
                   {DAILY_LIMIT - questionsUsed}
                 </div>
@@ -119,7 +107,9 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
               </div>
               <div>
                 <h3 className="text-white text-lg font-black tracking-tight uppercase leading-none">{BOT_NAME}</h3>
-                <div className="text-[9px] font-bold uppercase text-emerald-400 tracking-widest mt-1 opacity-80">Núcleo Neural / Portugal 2026</div>
+                <div className="text-[9px] font-bold uppercase text-emerald-400 tracking-widest mt-1 opacity-80">
+                  {isPremium ? 'Núcleo Neural Pro' : 'Núcleo Local'}
+                </div>
               </div>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-white transition-colors">
@@ -144,15 +134,24 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
                 {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" style={{animationDelay: `${i*0.2}s`}}></div>)}
               </div>
             )}
+            
+            {isLimitReached && (
+              <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center space-y-4 animate-in zoom-in-95">
+                <p className="text-xs text-emerald-400 font-bold uppercase tracking-widest">Acesso Gratuito Excedido</p>
+                <button 
+                  onClick={() => {
+                    setIsOpen(false);
+                    onNavigateToSupport?.();
+                  }}
+                  className="w-full py-4 bg-emerald-500 text-slate-950 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-xl"
+                >
+                  Desbloquear Auditoria Ilimitada
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="p-8 bg-slate-900/40 border-t border-white/5">
-            <div className="mb-4 flex justify-between items-center px-2">
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                 <span className={`w-1.5 h-1.5 rounded-full ${isPremium ? 'bg-emerald-500' : 'bg-emerald-500 animate-pulse'}`}></span>
-                 {isPremium ? 'Auditoria Ilimitada' : `Consultas: ${DAILY_LIMIT - questionsUsed}/${DAILY_LIMIT}`}
-               </span>
-            </div>
             <div className="flex gap-3">
               <input
                 type="text"
@@ -161,7 +160,7 @@ const ChatInterface: React.FC<Props> = ({ isPremium, onPremiumUnlocked }) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder={isLimitReached ? "Terminal Bloqueado" : "Consultar o Investigador..."}
-                className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl px-5 py-4 outline-none focus:border-emerald-500/40 transition-all text-sm font-medium placeholder:text-slate-600 disabled:opacity-50"
+                className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl px-5 py-4 outline-none focus:border-emerald-500/40 transition-all text-sm font-medium placeholder:text-slate-700 disabled:opacity-50"
               />
               <button 
                 onClick={handleSend}

@@ -11,6 +11,7 @@ body {
     background-color: var(--bg-deep);
     color: #f8fafc;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 .font-heading {
@@ -24,15 +25,16 @@ body {
     width: 100%;
     height: 100%;
     background: 
-        radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
-        radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+        radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
     z-index: -1;
     pointer-events: none;
 }
 
 .glass-3d {
-    background: rgba(15, 18, 25, 0.7);
-    backdrop-filter: blur(12px);
+    background: rgba(15, 18, 25, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-subtle);
 }
 
@@ -42,13 +44,13 @@ body {
 .chat-bubble-user {
     background: var(--brand-emerald);
     color: #0a0c10;
-    border-top-right-radius: 0;
+    border-top-right-radius: 0.25rem;
 }
 
 .chat-bubble-bot {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-subtle);
-    border-top-left-radius: 0;
+    border-top-left-radius: 0.25rem;
 }
 
 @keyframes fadeIn {
@@ -62,4 +64,23 @@ body {
 
 .poll-bar {
     transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ajustes Mobile Específicos */
+@media (max-width: 640px) {
+    .font-heading {
+        letter-spacing: -0.02em;
+    }
+    
+    #chat-panel {
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+    }
+    
+    .candidate-card {
+        min-height: auto !important;
+    }
 }

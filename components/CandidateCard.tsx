@@ -9,6 +9,7 @@ interface Props {
 const CandidateCard: React.FC<Props> = ({ candidate }) => {
   const [showMore, setShowMore] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [hasBeenHovered, setHasBeenHovered] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -18,9 +19,14 @@ const CandidateCard: React.FC<Props> = ({ candidate }) => {
     }
   };
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (!hasBeenHovered) setHasBeenHovered(true);
+  };
+
   return (
     <div 
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setIsHovered(false)}
       className="relative w-full h-[680px] rounded-[2rem] bg-slate-900/30 border border-white/5 overflow-hidden flex flex-col group transition-all duration-500 hover:border-emerald-500/20 shadow-xl"
     >
@@ -81,7 +87,7 @@ const CandidateCard: React.FC<Props> = ({ candidate }) => {
                   <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                     <div 
                       className={`h-full rounded-full transition-all duration-[1.5s] ease-out ${stat.color}`}
-                      style={{ width: isHovered ? `${stat.value}%` : '5%' }}
+                      style={{ width: hasBeenHovered ? `${stat.value}%` : '0%' }}
                     ></div>
                   </div>
                 </div>

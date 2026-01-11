@@ -3,16 +3,26 @@ import React, { useState } from 'react';
 
 interface Props {
   onBack: () => void;
+  onPremiumUnlocked?: () => void;
 }
 
-const SupportPage: React.FC<Props> = ({ onBack }) => {
+const SupportPage: React.FC<Props> = ({ onBack, onPremiumUnlocked }) => {
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText("923364360");
     setCopyFeedback(true);
     setTimeout(() => setCopyFeedback(false), 2000);
+  };
+
+  const handleSimulateConfirmation = () => {
+    setIsConfirming(true);
+    // Simula uma pequena latência de rede/processamento
+    setTimeout(() => {
+      onPremiumUnlocked?.();
+    }, 1500);
   };
 
   return (
@@ -48,7 +58,7 @@ const SupportPage: React.FC<Props> = ({ onBack }) => {
                     { step: "1", title: "Acede ao MB WAY", desc: "No teu smartphone, inicia a aplicação bancária ou MB WAY." },
                     { step: "2", title: "Selecionar 'Enviar Dinheiro'", desc: "Escolhe a opção de envio imediato." },
                     { step: "3", title: "Introduzir Número", desc: "Revele o identificador de transmissão em baixo." },
-                    { step: "4", title: "Valor Livre", desc: "Tu defines o investimento na qualidade da informação." }
+                    { step: "4", title: "Confirmar Apoio", desc: "Clique no botão de confirmação após o envio para desbloquear o acesso PRO." }
                   ].map((s, i) => (
                     <div key={i} className="flex gap-6 group">
                       <div className="w-10 h-10 shrink-0 bg-white/5 rounded-xl flex items-center justify-center text-emerald-500 font-black text-sm border border-white/10 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all">
@@ -74,7 +84,7 @@ const SupportPage: React.FC<Props> = ({ onBack }) => {
                       onClick={() => setIsRevealed(true)}
                       className="w-full py-8 bg-emerald-500 text-slate-950 rounded-[2rem] font-black uppercase tracking-widest text-[11px] hover:bg-emerald-400 transition-all shadow-2xl shadow-emerald-500/20 active:scale-95"
                     >
-                      Apoiar Agora
+                      Revelar Protocolo MB WAY
                     </button>
                   </div>
                 ) : (
@@ -86,27 +96,48 @@ const SupportPage: React.FC<Props> = ({ onBack }) => {
                       </div>
                     </div>
 
-                    <button 
-                      onClick={handleCopy}
-                      className={`w-full py-6 sm:py-8 rounded-[2rem] font-black text-[10px] sm:text-xs uppercase tracking-[0.3em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${
-                        copyFeedback 
-                        ? 'bg-emerald-500 text-slate-950' 
-                        : 'bg-white text-slate-950 hover:bg-emerald-500 hover:text-white'
-                      }`}
-                    >
-                      {copyFeedback ? (
-                        <>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M20 6 9 17l-5-5"/></svg>
-                          Protocolo Copiado!
-                        </>
-                      ) : (
-                        <>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                          Copiar Número
-                        </>
-                      )}
-                    </button>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-60 italic">ID Beneficiário: J. Pedro S.</p>
+                    <div className="space-y-4">
+                      <button 
+                        onClick={handleCopy}
+                        className={`w-full py-6 rounded-[2rem] font-black text-[10px] sm:text-xs uppercase tracking-[0.3em] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${
+                          copyFeedback 
+                          ? 'bg-emerald-500 text-slate-950' 
+                          : 'bg-white text-slate-950 hover:bg-emerald-500 hover:text-white'
+                        }`}
+                      >
+                        {copyFeedback ? (
+                          <>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M20 6 9 17l-5-5"/></svg>
+                            Número Copiado
+                          </>
+                        ) : (
+                          <>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            Copiar Número
+                          </>
+                        )}
+                      </button>
+
+                      <button 
+                        onClick={handleSimulateConfirmation}
+                        disabled={isConfirming}
+                        className="w-full py-6 rounded-[2rem] bg-emerald-600 text-white font-black text-[10px] sm:text-xs uppercase tracking-[0.3em] hover:bg-emerald-500 transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                      >
+                        {isConfirming ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            A Validar Transmissão...
+                          </>
+                        ) : (
+                          <>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7"/></svg>
+                            Já enviei o apoio
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-60 italic pt-4">ID Beneficiário: J. Pedro S.</p>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none"></div>

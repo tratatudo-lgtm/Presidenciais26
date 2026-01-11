@@ -1,4 +1,13 @@
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  phone: string;
+  createdAt: string;
+}
+
 export interface Candidate {
   nome: string;
   idade: number;
