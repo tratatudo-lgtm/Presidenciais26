@@ -1,14 +1,10 @@
-
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 
-// Garantir que o app não crasha se o root demorar a aparecer ou se houver erro de ambiente
 const container = document.getElementById('root');
 
-if (!container) {
-  console.error("Critical Failure: Root element not found. Check index.html structure.");
-} else {
+if (container) {
   try {
     const root = createRoot(container);
     root.render(
@@ -16,8 +12,13 @@ if (!container) {
         <App />
       </React.StrictMode>
     );
-  } catch (err) {
-    console.error("React Initialization Error:", err);
-    container.innerHTML = `<div style="color: white; padding: 20px;">FALHA CRÍTICA NO TERMINAL: ${err}</div>`;
+  } catch (error) {
+    console.error("Erro na renderização:", error);
+    container.innerHTML = `<div style="color: white; padding: 20px; font-family: sans-serif;">
+      <h2>Erro de Sistema</h2>
+      <p>${error instanceof Error ? error.message : 'Erro desconhecido'}</p>
+    </div>`;
   }
+} else {
+  console.error("Elemento root não encontrado");
 }

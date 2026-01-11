@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { Message } from "../types";
 import { SYSTEM_PROMPT } from "../constants";
@@ -7,15 +6,15 @@ const unlockPremiumTool: FunctionDeclaration = {
   name: "unlock_premium",
   parameters: {
     type: Type.OBJECT,
-    description: "Desbloqueia as funcionalidades premium do terminal quando um comprovativo de 5€ ou mais é detetado.",
+    description: "Ativa o acesso premium se o comprovativo enviado pelo utilizador for válido (valor >= 5€).",
     properties: {
       valor_detetado: {
         type: Type.NUMBER,
-        description: "O valor em euros encontrado no comprovativo."
+        description: "O valor total em euros encontrado no comprovativo."
       },
-      tipo_comprovativo: {
+      confirmacao: {
         type: Type.STRING,
-        description: "MB WAY, Transferência Bancária, etc."
+        description: "Breve descrição do que foi validado (ex: MB WAY 5€)."
       }
     },
     required: ["valor_detetado"]
@@ -43,7 +42,7 @@ export async function getAssistantResponse(messages: Message[]): Promise<{
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash-lite-latest',
       contents: [{ role: 'user', parts }],
       config: {
         systemInstruction: SYSTEM_PROMPT,
@@ -55,30 +54,34 @@ export async function getAssistantResponse(messages: Message[]): Promise<{
     });
 
     let shouldUnlock = false;
-    if (response.functionCalls) {
-      const call = response.functionCalls.find(f => f.name === 'unlock_premium');
-      if (call) {
+    const functionCalls = response.candidates?.[0]?.content?.parts?.filter(p => p.functionCall);
+    
+    if (functionCalls && functionCalls.length > 0) {
+      const call = functionCalls[0].functionCall;
+      if (call && call.name === 'unlock_premium') {
         const val = (call.args as any).valor_detetado;
-        if (val >= 5) shouldUnlock = true;
+        if (val >= 5) {
+          shouldUnlock = true;
+        }
       }
     }
 
-    const text = response.text || "O Tuga está a processar os dados...";
+    const text = response.text || "O Investigador está a analisar os dados...";
     
-    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources = chunks
+    const grounding = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const sources = grounding
       .filter(chunk => chunk.web)
       .map(chunk => ({
-        title: chunk.web.title || "Fonte de Notícias",
-        uri: chunk.web.uri
+        title: chunk.web?.title || "Fonte Verificada",
+        uri: chunk.web?.uri || "#"
       }));
 
     return { text, sources, shouldUnlock };
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Erro Gemini:", error);
     return { 
-      text: "FALHA NO TERMINAL: O núcleo neural não responde. Tenta novamente." 
+      text: "FALHA NO TERMINAL: O núcleo neural não responde. Verifique a ligação." 
     };
   }
 }
