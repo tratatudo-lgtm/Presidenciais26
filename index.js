@@ -323,6 +323,15 @@ function renderChat() {
           <div class="flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}">
             <div class="max-w-[85%] p-4 rounded-xl text-[12px] ${m.role === 'user' ? 'bg-emerald-500 text-slate-900 font-bold' : 'bg-white/5 text-slate-300 border border-white/5'}">
               ${m.content}
+              <!-- Fix: Display sources in vanilla JS chat -->
+              ${m.role === 'assistant' && m.sources && m.sources.length > 0 ? `
+                <div class="mt-3 pt-3 border-t border-white/10 text-[10px]">
+                  <p class="text-emerald-500 font-bold uppercase mb-1">Fontes Verificadas:</p>
+                  <div class="flex flex-wrap gap-2">
+                    ${m.sources.map(s => `<a href="${s.uri}" target="_blank" class="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-slate-400 hover:text-white truncate max-w-full transition-colors">${s.title}</a>`).join('')}
+                  </div>
+                </div>
+              ` : ''}
             </div>
           </div>
         `).join('')}
@@ -361,7 +370,8 @@ function renderChat() {
     renderChat();
 
     const response = await getAssistantResponse(state.messages);
-    state.messages.push({ role: 'assistant', content: response.text });
+    // Fix: Save sources in message object for rendering
+    state.messages.push({ role: 'assistant', content: response.text, sources: response.sources });
     state.isLoading = false;
     renderChat();
     const history = document.getElementById('chat-history');
